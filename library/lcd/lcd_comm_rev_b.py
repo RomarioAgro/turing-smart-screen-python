@@ -234,14 +234,25 @@ class LcdCommRevB(LcdComm):
             for h in range(image_height):
                 for w in range(image_width):
                     if self.orientation == Orientation.PORTRAIT or self.orientation == Orientation.LANDSCAPE:
-                        R = pix[w, h][0] >> 3
-                        G = pix[w, h][1] >> 2
-                        B = pix[w, h][2] >> 3
+                        if isinstance(pix[w, h], int):
+                            R = pix[w, h] >> 3
+                            G = pix[w, h] >> 2
+                            B = pix[w, h] >> 3
+                        else:
+                            R = pix[w, h][0] >> 3
+                            G = pix[w, h][1] >> 2
+                            B = pix[w, h][2] >> 3
+
                     else:
                         # Manage reverse orientations from software, because display does not manage it
-                        R = pix[image_width - w - 1, image_height - h - 1][0] >> 3
-                        G = pix[image_width - w - 1, image_height - h - 1][1] >> 2
-                        B = pix[image_width - w - 1, image_height - h - 1][2] >> 3
+                        if isinstance(pix[w, h], int):
+                            R = pix[image_width - w - 1, image_height - h - 1] >> 3
+                            G = pix[image_width - w - 1, image_height - h - 1] >> 2
+                            B = pix[image_width - w - 1, image_height - h - 1] >> 3
+                        else:
+                            R = pix[image_width - w - 1, image_height - h - 1][0] >> 3
+                            G = pix[image_width - w - 1, image_height - h - 1][1] >> 2
+                            B = pix[image_width - w - 1, image_height - h - 1][2] >> 3
 
                     # Color information is 0bRRRRRGGGGGGBBBBB
                     # Revision A: Encode in Little-Endian (native x86/ARM encoding)
