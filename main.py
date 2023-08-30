@@ -210,12 +210,12 @@ if __name__ == "__main__":
     scheduler.QueueHandler()
 
     if tray_icon and platform.system() == "Darwin":  # macOS-specific
-        from AppKit import NSBundle, NSApp, NSApplicationActivationPolicyProhibited
+        # from AppKit import NSBundle, NSApp, NSApplicationActivationPolicyProhibited
 
         # Hide Python Launcher icon from macOS dock
-        info = NSBundle.mainBundle().infoDictionary()
-        info["LSUIElement"] = "1"
-        NSApp.setActivationPolicy_(NSApplicationActivationPolicyProhibited)
+        # info = NSBundle.mainBundle().infoDictionary()
+        # info["LSUIElement"] = "1"
+        # NSApp.setActivationPolicy_(NSApplicationActivationPolicyProhibited)
 
         # For macOS: display the tray icon now with blocking function
         tray_icon.run()

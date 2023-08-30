@@ -107,7 +107,6 @@ class LcdCommRevB(LcdComm):
         # This command reads LCD answer on serial link, so it bypasses the queue
         self.SendCommand(Command.HELLO, payload=hello, bypass_queue=True)
         response = self.lcd_serial.read(10)
-
         if len(response) != 10:
             logger.warning("Device not recognised (short response to HELLO)")
         assert response, "Device did not return anything"
