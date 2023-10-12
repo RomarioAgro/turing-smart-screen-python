@@ -169,9 +169,14 @@ class LcdCommRevA(LcdComm):
         with self.update_queue_mutex:
             for h in range(image_height):
                 for w in range(image_width):
-                    R = pix[w, h][0] >> 3
-                    G = pix[w, h][1] >> 2
-                    B = pix[w, h][2] >> 3
+                    if isinstance(pix[w, h], int):
+                        R = pix[w, h] >> 3
+                        G = pix[w, h] >> 2
+                        B = pix[w, h] >> 3
+                    else:
+                        R = pix[w, h][0] >> 3
+                        G = pix[w, h][1] >> 2
+                        B = pix[w, h][2] >> 3
 
                     rgb = (R << 11) | (G << 5) | B
                     line += struct.pack('<H', rgb)
