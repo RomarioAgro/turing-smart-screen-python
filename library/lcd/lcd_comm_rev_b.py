@@ -20,8 +20,8 @@ import struct
 
 from serial.tools.list_ports import comports
 
-from library.lcd.lcd_comm import *
-from library.log import logger
+from turing_smart_screen_python.library.lcd.lcd_comm import *
+from turing_smart_screen_python.library.log import logger
 
 
 class Command(IntEnum):
