@@ -1,4 +1,6 @@
 # Import only the modules for LCD communication
+import logging
+
 import qrcode
 from turing_smart_screen_python.library.lcd.lcd_comm import Orientation
 from turing_smart_screen_python.library.lcd.lcd_comm_rev_a import LcdCommRevA
@@ -9,9 +11,23 @@ import serial
 from sys import argv
 import subprocess
 import win32com.client
+import os
+import datetime
 
 
+current_time = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H_%M_%S')
+logging.basicConfig(
+    filename='d:\\files\\' + os.path.basename(__file__) + '_.log',
+    filemode='a',
+    level=logging.DEBUG,
+    format="%(asctime)s - %(filename)s - %(funcName)s: %(lineno)d - %(message)s",
+    datefmt='%H:%M:%S')
 
+logger_qr: logging.Logger = logging.getLogger(__name__)
+logger_qr.setLevel(logging.DEBUG)
+logger_qr.debug('start')
+
+COM_PORT = "COM13"
 QR_display_width = 320
 QR_display_height = 480
 VENDOR_ID = 0x1A86  # Замените на свой Vendor ID
@@ -30,6 +46,7 @@ def get_usb_device_instance_id(vendor_id, product_id):
         if "USB\\VID_{:04X}&PID_{:04X}".format(vendor_id, product_id) in line:
             device_id = line.split("USB\\")[-1]
             my_device.append(device_id.strip())
+    logger_qr.debug('список устройств {}'.format(my_device))
     return my_device
 
 
@@ -39,13 +56,16 @@ def found_com_port(vendor_id, product_id) -> str:
     возвращает строку с именем COM порта
     """
     wmi = win32com.client.GetObject("winmgmts:")
+    my_device = []
     for serial in wmi.InstancesOf("Win32_SerialPort"):
         dev_id = serial.PNPDeviceID
         expected_line = "VID_{:04X}&PID_{:04X}".format(vendor_id, product_id)
         if expected_line in dev_id:
             print(serial.PNPDeviceID, serial.DeviceID, serial.Name, serial.Description)
-            return serial.DeviceID
-
+            logger_qr.debug('нашли устройство {0}'.format(dev_id))
+            my_device.append(serial.DeviceID)
+            # return serial.DeviceID
+    return my_device
 
 def check_com_port(port):
     """
@@ -90,9 +110,17 @@ def show_qr(lcd: object, image: object, qr_text: str = ''):
         lcd.DisplayPILImage(image, x=0, y=0)
 
     else:
+        lcd.Reset()
+        lcd.InitializeComm()
+        lcd.ScreenOff()
+        lcd.Clear()
         bg = Image.new('RGB', (320, 480), (255, 255, 255))
         lcd.DisplayPILImage(bg)
-        lcd.SetBrightness(0)
+        try:
+            lcd.SetBrightness(level=0)
+        except Exception as exc:
+            print(exc)
+
 
 
 def output_content_on_minidisplay(pict, text, display_on: bool = True):
@@ -100,27 +128,33 @@ def output_content_on_minidisplay(pict, text, display_on: bool = True):
     функция поиска дисплея вывода изображения на него
     и выключения дисплея
     """
-    COM_PORT = found_com_port(VENDOR_ID, PRODUCT_ID)
     if check_com_port(COM_PORT):
         image = qr_image(i_text=pict)
-        my_device = get_usb_device_instance_id(VENDOR_ID, PRODUCT_ID)
-        if my_device[0].find('2017-2-25') >= 0:
-            lcd_comm = LcdCommRevB(com_port=COM_PORT,
-                                   display_width=320,
-                                   display_height=480)
-        else:
+        lcd_comm = LcdCommRevB(com_port=COM_PORT,
+                                display_width=320,
+                                display_height=480)
+        try:
+            if display_on:
+                show_qr(lcd=lcd_comm, image=image, qr_text=text)
+            else:
+                show_qr(lcd=lcd_comm, image=None)
+        except Exception as exc:
+            logging.debug('ревизия B не импортировалась {0}, тогда пробуем ревизию B'.format(exc))
             lcd_comm = LcdCommRevA(com_port=COM_PORT,
-                                   display_width=320,
-                                   display_height=480)
-        if display_on:
-            show_qr(lcd=lcd_comm, image=image, qr_text=text)
-        else:
-            show_qr(lcd=lcd_comm, image=None)
+                                     display_width=320,
+                                     display_height=480)
+            if display_on:
+                show_qr(lcd=lcd_comm, image=image, qr_text=text)
+            else:
+                show_qr(lcd=lcd_comm, image=None)
 
 def main():
     qr_pict = 'https://yandex.ru/video/preview/11469769755445690591'
     qr_text = "для оплаты по СБП\nсканируйте QR код"
-    output_content_on_minidisplay(qr_pict, qr_text)
+    output_content_on_minidisplay(qr_pict, qr_text, display_on=True)
+    time.sleep(1)
+    print('выключаем экран')
+    output_content_on_minidisplay(qr_pict, qr_text, display_on=False)
 
 if __name__ == '__main__':
     main()

@@ -108,9 +108,11 @@ class LcdCommRevB(LcdComm):
         self.SendCommand(Command.HELLO, payload=hello, bypass_queue=True)
         response = self.lcd_serial.read(10)
         if len(response) != 10:
+            self.lcd_serial.close()
             logger.warning("Device not recognised (short response to HELLO)")
         assert response, "Device did not return anything"
         if response[0] != Command.HELLO or response[-1] != Command.HELLO:
+            self.lcd_serial.close()
             logger.warning("Device not recognised (bad framing)")
         if [x for x in response[1:6]] != hello:
             logger.warning("Device not recognised (No HELLO; got %r)" % (response[1:6],))
