@@ -1,6 +1,5 @@
 # Import only the modules for LCD communication
 import logging
-
 import qrcode
 from turing_smart_screen_python.library.lcd.lcd_comm import Orientation
 from turing_smart_screen_python.library.lcd.lcd_comm_rev_a import LcdCommRevA
@@ -13,6 +12,13 @@ import subprocess
 import win32com.client
 import os
 import datetime
+from dotenv import load_dotenv
+
+
+os.chdir('d:\\kassa\\script_py\\shtrih\\')
+
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(dotenv_path=env_path)
 
 
 current_time = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H_%M_%S')
@@ -27,7 +33,7 @@ logger_qr: logging.Logger = logging.getLogger(__name__)
 logger_qr.setLevel(logging.DEBUG)
 logger_qr.debug('start')
 
-COM_PORT = "COM13"
+COM_PORT = os.getenv('COM_PORT', None)
 QR_display_width = 320
 QR_display_height = 480
 VENDOR_ID = 0x1A86  # Замените на свой Vendor ID
@@ -113,9 +119,9 @@ def show_qr(lcd: object, image: object, qr_text: str = ''):
         lcd.Reset()
         lcd.InitializeComm()
         lcd.ScreenOff()
-        lcd.Clear()
-        bg = Image.new('RGB', (320, 480), (255, 255, 255))
-        lcd.DisplayPILImage(bg)
+        # lcd.Clear()
+        # bg = Image.new('RGB', (320, 480), (255, 255, 255))
+        # lcd.DisplayPILImage(bg)
         try:
             lcd.SetBrightness(level=0)
         except Exception as exc:
